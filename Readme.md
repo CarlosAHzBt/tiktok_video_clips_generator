@@ -4,6 +4,10 @@
 
 Este proyecto es una aplicación orientada a objetos (POO) diseñada para generar automáticamente videos en formato TikTok. Utiliza la API de **GPT-4o-mini** para la generación de historias, **Text-to-Speech (TTS)** para la narración, y sincroniza estos elementos con clips de video y música de fondo para crear contenido atractivo y listo para publicar en TikTok.
 
+## Ejemplos
+
+Puedes ver ejemplos de los videos generados en [mi perfil de TikTok]([https://www.tiktok.com/@tu_usuario](https://www.tiktok.com/@reddit.cc0)).
+
 ## Características
 
 - **Generación de Historias:** Utiliza la API de GPT-4o-mini para crear historias intrigantes y cautivadoras basadas en temas proporcionados.
@@ -26,7 +30,7 @@ Este proyecto es una aplicación orientada a objetos (POO) diseñada para genera
 
 ### Requisitos Previos
 
-- **Python 3.7+** instalado en tu sistema.
+- **Python 3.10+** instalado en tu sistema.
 - **ImageMagick:** Asegúrate de tener ImageMagick instalado y la ruta configurada correctamente en `main.py`.
 - **FFPMEG** Asegurate de tener instalado FFPMEG en tu computadora y configura la ruta en tus variables de entorno.
 
