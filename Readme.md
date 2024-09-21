@@ -6,7 +6,7 @@ Este proyecto es una aplicación orientada a objetos (POO) diseñada para genera
 
 ## Ejemplos
 
-Puedes ver ejemplos de los videos generados en [mi perfil de TikTok]([https://www.tiktok.com/@tu_usuario](https://www.tiktok.com/@reddit.cc0)).
+Puedes ver ejemplos de los videos generados en [mi perfil de TikTok]([https://www.tiktok.com/@reddit.cc0]).
 
 ## Características
 
