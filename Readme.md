@@ -39,8 +39,8 @@ Puedes ver ejemplos de los videos generados en [mi perfil de TikTok](https://www
 1. **Clona el repositorio:**
 
     ```bash
-    git clone https://github.com/tu-usuario/generador-videos-tiktok.git
-    cd generador-videos-tiktok
+    git clone [https://github.com/tu-usuario/generador-videos-tiktok.git](https://github.com/CarlosAHzBt/tiktok_video_clips_generator)
+    cd tiktok_video_clips_generator
     ```
 
 2. **Crea un entorno virtual (opcional pero recomendado):**
@@ -122,13 +122,10 @@ Puedes ver ejemplos de los videos generados en [mi perfil de TikTok](https://www
 
 5. **Abre un Pull Request.**
 
-## Licencia
-
-Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
 ## Contacto
 
-Para cualquier consulta o sugerencia, por favor contacta a [tu-email@ejemplo.com](mailto:tu-email@ejemplo.com).
+Para cualquier consulta o sugerencia, por favor contacta a [tu-email@ejemplo.com](carlos.hb@culiacan.tecnm.mx).
 
 ---
 
