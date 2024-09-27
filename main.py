@@ -6,12 +6,21 @@ os.environ["IMAGEMAGICK_BINARY"] = r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI
 import torch
 from moviepy.editor import VideoFileClip, AudioFileClip
 from modules.story_generator import StoryGenerator
-from modules.audio_generator import AudioGenerator
 from modules.audio_duration_calculator import AudioDurationCalculator
 from modules.video_selector import VideoSelector
 from modules.music_adder import MusicAdder
 import config  # Importar el archivo de configuración
 from pydub import AudioSegment
+
+
+
+# Selección del motor de TTS
+USE_EDGE_TTS = config.USE_EDGE_TTS  # Cambia a False para usar TTS con clonación de voz
+
+if USE_EDGE_TTS:
+    from modules.edge_tts_generator import EdgeTTSGenerator as AudioGenerator
+else:
+    from modules.tts_api_generator import TTSApiGenerator as AudioGenerator
 
 class RedditStoryVideoCreator:
     def __init__(self):
@@ -33,17 +42,28 @@ class RedditStoryVideoCreator:
 
         # Inicializar componentes
         self.story_generator = StoryGenerator(api_key=self.api_key)
-        self.audio_generator = AudioGenerator(
-            device=self.device, 
-            speaker_wav=config.SPEAKER_WAV,  # Ruta al archivo de voz de referencia
-            audio_file=self.audio_file
-        )
+
+        # Inicializar el generador de audio según el motor seleccionado
+        if USE_EDGE_TTS:
+            self.audio_generator = AudioGenerator(
+                language=config.EDGE_TTS_LANGUAGE,
+                audio_file=self.audio_file,
+                voice_gender=config.EDGE_TTS_VOICE_GENDER
+            )
+        else:
+            self.audio_generator = AudioGenerator(
+                device=self.device,
+                speaker_wav=config.SPEAKER_WAV_FEMALE,
+                language="es",
+                audio_file=self.audio_file,
+                tts_model=config.TTS_MODEL
+            )
+
         self.audio_duration_calculator = AudioDurationCalculator(audio_file=self.audio_file)
         self.video_selector = VideoSelector(video_dir=self.video_dir)
         self.music_adder = MusicAdder(
-            music_dir=config.MUSIC_DIR, 
+            music_dir=config.MUSIC_DIR,
             volume_reduction_db=config.VOLUME_REDUCTION_DB,
-            
         )
 
     def run(self, prompts):
@@ -95,24 +115,24 @@ class RedditStoryVideoCreator:
         print(f"Duración del audio combinado: {len(mixed_audio)/1000} segundos")
         assert len(mixed_audio) == int(video_clip.duration * 1000), "La duración del audio combinado no coincide con la duración del video."
 
-        # Asignar el audio combinado al video usando context manager para asegurar el cierre
+        # Asignar el audio combinado al video
         try:
             mixed_audio_clip = AudioFileClip(mixed_audio_path)
             final_video = video_clip.set_audio(mixed_audio_clip)
-            
+
             # Exportar el video con narración y música de fondo
             final_output_path = f"{self.final_output}_{video_number}.mp4"  # Nombrar los videos de forma única
             print(f"Exportando el video final a: {final_output_path}")
             final_video.write_videofile(
-                final_output_path, 
-                codec='libx264', 
+                final_output_path,
+                codec='libx264',
                 audio_codec='aac',
                 temp_audiofile='temp-audio.m4a',
                 remove_temp=True,
                 threads=6,
                 fps=30
             )
-            
+
             # Liberar recursos
             mixed_audio_clip.close()
             final_video.close()
@@ -129,22 +149,22 @@ class RedditStoryVideoCreator:
 
 if __name__ == "__main__":
     creator = RedditStoryVideoCreator()
-     
+
     # Preguntar al usuario cuántos videos quiere generar, asegurándose de que el número sea válido
     while True:
         try:
-           num_videos = int(input("Introduce el número de videos a generar: "))
-           if num_videos > 0:
-              break
-           else:
-              print("Por favor, introduce un número mayor que 0.")
+            num_videos = int(input("Introduce el número de videos a generar: "))
+            if num_videos > 0:
+                break
+            else:
+                print("Por favor, introduce un número mayor que 0.")
         except ValueError:
-           print("Entrada no válida. Por favor, introduce un número entero.")
+            print("Entrada no válida. Por favor, introduce un número entero.")
+
     # Recibir N cantidad de prompts de uno en uno
     prompts = []
     for i in range(num_videos):
         prompt = input(f"Introduce el tema para la historia de Reddit {i+1}: ")
         prompts.append(prompt)
-    
-      
+
     creator.run(prompts)

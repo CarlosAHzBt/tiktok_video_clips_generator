@@ -1,7 +1,7 @@
 # config.py
 
 # Claves API y rutas
-OPENAI_API_KEY = 'sk-XXXXXXXX'
+OPENAI_API_KEY = 'API-KEY'  # Actual
 OPENAI_MODEL_NAME = 'gpt-4o-mini'  # Actualiza según el modelo que estés utilizando
 OPENAI_MAX_TOKENS = 4096 # Máximo número de tokens permitidos por solicitud
 
@@ -9,6 +9,18 @@ VIDEO_DIR = r'C:\Users\carlo\Downloads\Video\oddly satisfaying videos'  # Actual
 VIDEO_FORMATS = ['.mp4', '.avi', '.mov', '.mkv']
 TARGET_RESOLUTION = (576, 1024) # Resolución objetivo para los clips de video (alto, ancho) 576 x 1024 es la comun de los clips descargados de tiktok, pero igualmente si es mayor se ajustara a esta resolucion
 VIDEO_SPEED_FACTOR = 1.9  # Factor de velocidad para procesamiento de video
+
+
+USE_EDGE_TTS = True  # Cambia a True para usar edge-tts en lugar de TTS con clonación de voz
+
+# Parámetros para TTS con clonación de voz
+SPEAKER_WAV_FEMALE = "camilahermana.mp3"
+SPEAKER_WAV_MALE = "camilahermana.mp3"
+TTS_MODEL = "tts_models/multilingual/multi-dataset/xtts_v2"
+
+# Parámetros para edge-tts
+EDGE_TTS_LANGUAGE = "es-MX"
+EDGE_TTS_VOICE_GENDER = "male"  # 'male' o 'female'
 
 # Audio y Música
 AUDIO_FILE = 'audio_story.wav'  # Ruta al archivo de narración (Este se puede dejar tal cual es un archivo que se creará)
