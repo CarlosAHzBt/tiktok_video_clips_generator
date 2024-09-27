@@ -1,38 +1,39 @@
 # Generador Automático de Videos para TikTok
 
 ## Descripción
-
-Este proyecto es una aplicación orientada a objetos (POO) diseñada para generar automáticamente videos en formato TikTok. Utiliza la API de **GPT-4o-mini** para la generación de historias, **Text-to-Speech (TTS)** para la narración, y sincroniza estos elementos con clips de video y música de fondo para crear contenido atractivo y listo para publicar en TikTok.
+Este proyecto es una aplicación orientada a objetos (POO) diseñada para generar automáticamente videos en formato TikTok. Utiliza la API de GPT-4o-mini para la generación de historias, Text-to-Speech (TTS) para la narración, y sincroniza estos elementos con clips de video y música de fondo para crear contenido atractivo y listo para publicar en TikTok.
 
 ## Ejemplos
-
-Puedes ver ejemplos de los videos generados en [mi perfil de TikTok](https://www.tiktok.com/@reddit.cc0) 
+Puedes ver ejemplos de los videos generados en [mi perfil de TikTok](https://www.tiktok.com/@reddit.cc0).
 
 ## Características
-
 - **Generación de Historias:** Utiliza la API de GPT-4o-mini para crear historias intrigantes y cautivadoras basadas en temas proporcionados.
-- **Conversión de Texto a Voz (TTS):** Transforma las historias generadas en narraciones de alta calidad utilizando modelos de TTS con clonación de voz.
+- **Conversión de Texto a Voz (TTS) con Múltiples Motores:**
+  - **TTS con Clonación de Voz:** Utiliza modelos avanzados de TTS para generar narraciones con clonación de voz personalizada.
+  - **Edge-TTS:** Integra el módulo `edge-tts` para aprovechar las voces de alta calidad de Microsoft Edge, incluyendo voces masculinas y femeninas de México.
 - **Selección y Edición de Clips de Video:** Selecciona y procesa clips de video existentes para ajustarlos a la duración de la narración.
 - **Adición de Música de Fondo:** Incorpora música de fondo seleccionada aleatoriamente y ajusta su volumen para complementar la narración.
 - **Exportación de Videos Finales:** Combina todos los elementos y exporta el video final en formato MP4, listo para ser publicado en TikTok.
 
 ## Tecnologías Utilizadas
-
 - **Python 3.x**
 - **GPT-4o-mini API** para generación de texto
 - **TTS (Text-to-Speech)** para narración
+  - TTS con Clonación de Voz
+  - Edge-TTS
 - **MoviePy** para edición de video
 - **Pydub** para manipulación de audio
 - **ImageMagick** para procesamiento de imágenes
 - **PyTorch** para procesamiento en GPU (opcional)
+- **Edge-TTS** para síntesis de voz con las voces de Microsoft Edge
 
 ## Instalación
 
 ### Requisitos Previos
-
 - **Python 3.10+** instalado en tu sistema.
 - **ImageMagick:** Asegúrate de tener ImageMagick instalado y la ruta configurada correctamente en `main.py`.
-- **FFPMEG** Asegurate de tener instalado FFPMEG en tu computadora y configura la ruta en tus variables de entorno.
+- **FFmpeg:** Asegúrate de tener instalado FFmpeg en tu computadora y configura la ruta en tus variables de entorno.
+- **Edge-TTS:** Se instalará como dependencia, pero requiere una conexión a Internet para funcionar correctamente.
 
 ### Pasos de Instalación
 
@@ -66,11 +67,14 @@ Puedes ver ejemplos de los videos generados en [mi perfil de TikTok](https://www
 
 ## Uso
 
-1. **Ejecuta el script principal:**
+### Selecciona el Motor de TTS:
+En el archivo `Config.py`, establece la variable `USE_EDGE_TTS` según el motor de TTS que desees utilizar:
 
-    ```bash
-    python main.py
-    ```
+```python
+USE_EDGE_TTS = True  # Usa Edge-TTS
+# USE_EDGE_TTS = False  # Usa TTS con clonación de voz
+```
+1. **Ejecuta main.py**
 
 2. **Sigue las instrucciones en pantalla:**
 
