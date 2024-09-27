@@ -66,47 +66,92 @@ class RedditStoryVideoCreator:
             volume_reduction_db=config.VOLUME_REDUCTION_DB,
         )
 
-    def run(self, prompts):
+    def run(self, prompts, num_parts=1):
         """
         Ejecuta todo el flujo de creación de videos con la lista de prompts.
         """
         try:
             n_videos = len(prompts)
             for i in range(n_videos):
-                # Paso 1: Usar el prompt de la lista
                 prompt_input = prompts[i]
                 print(f"Generando historia para el video {i+1} con el prompt: {prompt_input}")
-                story = self.story_generator.generate_story(prompt_input)
-                if not story:
-                    print(f"No se pudo generar la historia para el video {i+1}. Terminando el proceso.")
-                    continue  # Saltar al siguiente video si no se pudo generar la historia
 
-                # Paso 2: Convertir texto a voz (TTS)
-                print(f"Convirtiendo el texto a voz para el video {i+1}...")
-                self.audio_generator.text_to_speech(story)
+                if num_parts == 1:
+                    # Generar una historia única
+                    story = self.story_generator.generate_story(prompt_input)
+                    if not story:
+                        print(f"No se pudo generar la historia para el video {i+1}. Terminando el proceso.")
+                        continue
 
-                # Paso 3: Calcular la duración del audio
-                print(f"Calculando la duración del audio para el video {i+1}...")
-                audio_duration = self.audio_duration_calculator.get_audio_duration()
+                    # Procesar la historia normalmente
+                    self.process_story(story, i+1)
+                else:
+                    # Generar historia en múltiples partes
+                    story_parts = self.story_generator.generate_story_in_parts(prompt_input, num_parts)
+                    if not story_parts:
+                        print(f"No se pudo generar la historia para el video {i+1}. Terminando el proceso.")
+                        continue
 
-                # Paso 4: Seleccionar clips de video que coincidan con la duración del audio
-                print(f"Seleccionando clips de video para el video {i+1}...")
-                video_clip = self.video_selector.select_video_clips(audio_duration)
-
-                # Paso 5: Crear el video con el audio de narración y la música de fondo
-                print(f"Creando el video {i+1} con narración y música de fondo...")
-                self.create_video_with_audio_and_music(video_clip, i+1)
-
+                    for part_num, story_part in enumerate(story_parts, start=1):
+                        # Procesar cada parte de la historia
+                        self.process_story(story_part, i+1, part_num)
         except Exception as e:
             print(f"Error durante el proceso de creación de los videos: {e}")
 
-    def create_video_with_audio_and_music(self, video_clip, video_number):
+
+    def process_story(self, story_text, video_number, part_number=None):
+        """
+        Procesa una historia o parte de ella y genera el video correspondiente.
+        """
+        # Modificar los nombres de los archivos si es una parte
+        if part_number:
+            audio_file = f"{self.audio_file}_video{video_number}_parte{part_number}.wav"
+            final_output = f"{self.final_output}_video{video_number}_parte{part_number}.mp4"
+        else:
+            audio_file = f"{self.audio_file}_video{video_number}.wav"
+            final_output = f"{self.final_output}_{video_number}.mp4"
+
+        # Inicializar el generador de audio con el archivo de audio específico
+        if USE_EDGE_TTS:
+            audio_generator = AudioGenerator(
+                language=config.EDGE_TTS_LANGUAGE,
+                audio_file=audio_file,
+                voice_gender=config.EDGE_TTS_VOICE_GENDER
+            )
+        else:
+            audio_generator = AudioGenerator(
+                device=self.device,
+                speaker_wav=config.SPEAKER_WAV_FEMALE,
+                language="es",
+                audio_file=audio_file,
+                tts_model=config.TTS_MODEL
+            )
+
+        # Paso 2: Convertir texto a voz (TTS)
+        print(f"Convirtiendo el texto a voz para el video {video_number}, parte {part_number if part_number else ''}...")
+        audio_generator.text_to_speech(story_text)
+
+        # Paso 3: Calcular la duración del audio
+        print(f"Calculando la duración del audio para el video {video_number}, parte {part_number if part_number else ''}...")
+        audio_duration_calculator = AudioDurationCalculator(audio_file=audio_file)
+        audio_duration = audio_duration_calculator.get_audio_duration()
+
+        # Paso 4: Seleccionar clips de video que coincidan con la duración del audio
+        print(f"Seleccionando clips de video para el video {video_number}, parte {part_number if part_number else ''}...")
+        video_clip = self.video_selector.select_video_clips(audio_duration)
+
+        # Paso 5: Crear el video con el audio de narración y la música de fondo
+        print(f"Creando el video {video_number}, parte {part_number if part_number else ''} con narración y música de fondo...")
+        self.create_video_with_audio_and_music(video_clip, audio_file, final_output)
+
+    
+    def create_video_with_audio_and_music(self, video_clip, audio_file, final_output_path):
         """
         Combina los clips de video seleccionados con el audio de narración y la música de fondo.
         """
         # Combinar la música de fondo con el audio de narración usando Pydub
         mixed_audio_path = self.music_adder.add_music_to_audio(
-            narration_audio_path=self.audio_generator.get_audio_path(),
+            narration_audio_path=audio_file,
             target_duration=video_clip.duration
         )
 
@@ -121,7 +166,6 @@ class RedditStoryVideoCreator:
             final_video = video_clip.set_audio(mixed_audio_clip)
 
             # Exportar el video con narración y música de fondo
-            final_output_path = f"{self.final_output}_{video_number}.mp4"  # Nombrar los videos de forma única
             print(f"Exportando el video final a: {final_output_path}")
             final_video.write_videofile(
                 final_output_path,
@@ -136,25 +180,33 @@ class RedditStoryVideoCreator:
             # Liberar recursos
             mixed_audio_clip.close()
             final_video.close()
-            mixed_audio = None
-            final_video = None
             video_clip.close()
-            video_clip = None
 
         except Exception as e:
             print(f"Error al combinar el video con la narración y la música: {e}")
             raise
 
-        print(f"Video con narración y música de fondo creado: {self.final_output}_{video_number}.mp4")
+        print(f"Video con narración y música de fondo creado: {final_output_path}")
 
 if __name__ == "__main__":
     creator = RedditStoryVideoCreator()
 
-    # Preguntar al usuario cuántos videos quiere generar, asegurándose de que el número sea válido
+    # Preguntar al usuario cuántos videos quiere generar
     while True:
         try:
             num_videos = int(input("Introduce el número de videos a generar: "))
             if num_videos > 0:
+                break
+            else:
+                print("Por favor, introduce un número mayor que 0.")
+        except ValueError:
+            print("Entrada no válida. Por favor, introduce un número entero.")
+
+    # Preguntar al usuario cuántas partes desea para cada historia
+    while True:
+        try:
+            num_parts = int(input("Introduce el número de partes para cada historia (1 para una historia única): "))
+            if num_parts > 0:
                 break
             else:
                 print("Por favor, introduce un número mayor que 0.")
@@ -167,4 +219,4 @@ if __name__ == "__main__":
         prompt = input(f"Introduce el tema para la historia de Reddit {i+1}: ")
         prompts.append(prompt)
 
-    creator.run(prompts)
+    creator.run(prompts, num_parts)
