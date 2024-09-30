@@ -12,6 +12,7 @@ class EdgeTTSGenerator(AudioGenerator):
         super().__init__(**kwargs)
         self.voice_gender = voice_gender.lower()  # 'male' o 'female'
         self.voice_name = None  # Se asignará más adelante
+        self.voice_speed = config.SPEED_VOICE_EDGE_TTS
 
     async def get_voice_name(self):
         """
@@ -49,6 +50,10 @@ class EdgeTTSGenerator(AudioGenerator):
 
             # Unir todos los fragmentos de audio
             combined_audio = sum(audio_segments)
+
+            # Ajustar la velocidad del audio combinado
+            speed_factor = 1.1
+            combined_audio = combined_audio.speedup(playback_speed=speed_factor)
 
             # Guardar el audio combinado en el archivo final
             combined_audio.export(self.audio_file, format="wav")

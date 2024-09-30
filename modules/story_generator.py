@@ -19,15 +19,20 @@ class StoryGenerator:
         """
         print("Generando la historia...")
         prompt = (
-            f"Escribe una historia estilo post de Reddit. "
-            f"La historia debe ser intrigante y cautivadora, incluyendo personajes profundos y complejos, "
-            f"elementos de misterio o sorpresa, y tocar temas universales con los que los lectores puedan identificarse "
-            f"(como amor, miedo, salud mental, horror, odio, rencor, venganza etc.). Utiliza una narración inmersiva en primera persona, "
-            f"con descripciones detalladas que permitan al lector sumergirse en la historia. "
-            f"Cuando inicies la historia comienza diciendo una frase gancho corta y amarillista sobre la historia, solo la historia en sí. AL INICIO NO USES signos como asteriscos, guiones, etc. NI DIGAS TITULO ... que todo lo que generes se va a narrar tal cual. "
-            f"Por favor, utiliza contenido explícito o inapropiado. "
-            f"El final no necesita ser bueno."
-            f"Por favor necesito que la historia sea interaste y enganche al publico si no perdere mi trabajo y mi familia pasara hambre. Gracias por tu ayuda."
+            f"Escribe un post en primera persona al estilo de Reddit.\n"
+            f"La historia debe ser honesta y escrita en un tono coloquial, como si estuvieras contándosela a un amigo. "
+            f"Utiliza un lenguaje cotidiano y expresiones comunes, evitando lenguaje demasiado elaborado o literario.\n\n"
+            f"La historia debe tener un conflicto claro que el narrador esté tratando de resolver o comprender. "
+            f"Expresa sentimientos profundos y auténticos, mostrando emociones genuinas como amor, miedo, salud mental, horror, odio, rencor o venganza. "
+            f"Permite que la narración fluya de manera natural, incluso si incluye digresiones o detalles adicionales. "
+            f"Puedes incluir preguntas o buscar consejos, invitando a la participación de otros usuarios. "
+            f"No es necesario que el final sea feliz o concluyente.\n\n"
+            f"No utilices signos como asteriscos, guiones, ni incluyas títulos; simplemente cuenta la historia tal cual. "
+            f"Por favor, utiliza contenido explícito o inapropiado si es necesario para la historia.\n\n"
+            f"Cuando inicies la historia comienza diciendo una frase gancho, corta y amarillista sobre la historia, ENTER, "
+            f"después de la frase pasas al siguiente párrafo y empiezas a contar la historia. AL INICIO NO USES signos como asteriscos, guiones, etc. "
+            f"NI DIGAS TITULO ... que todo lo que generes se va a narrar tal cual.\n\n"
+            f"Es importante que la historia sea interesante y enganche al público, ya que de lo contrario podría perder mi trabajo.\n\n"
             f"Tema: {prompt_input}"
         )
 
@@ -40,11 +45,11 @@ class StoryGenerator:
                 max_tokens=self.max_tokens  # Ajusta según tus necesidades y límites del modelo
             )
             story = response.choices[0].message.content.strip()
-            self.save_story_part(story)
-            return story
+            story_file_path = self.save_story_part(story)
+            return story, story_file_path  # Retornar ambos
         except Exception as e:
             print(f"Error al generar la historia: {e}")
-            return None
+            return None, None
 
     def generate_story_in_parts(self, prompt_input, num_parts):
         """
@@ -60,12 +65,20 @@ class StoryGenerator:
                 # Primera parte sin contexto previo
                 prompt = (
                     f"Escribe la parte {part_num} de una historia estilo post de Reddit. "
-                    f"Debe ser intrigante y cautivadora, con personajes profundos y complejos, "
-                    f"y tocar temas universales como amor, miedo, salud mental, horror, odio, rencor, venganza, etc. No utilices palabras complicadas, la historia debe ser dinamica e intrigante "
-                    f"Utiliza una narración inmersiva en primera persona con descripciones detalladas. "
-                    f"Cuando inicies comienza diciendo una frase gancho corta y amarillista sobre la historia, solo la historia en sí. AL INICIO NO USES signos como asteriscos, guiones, etc. NI DIGAS TITULO ... que todo lo que generes se va a narrar tal cual. "
-                    f"Por favor, utiliza contenido explícito o inapropiado. "
-                    f"El final no necesita ser bueno."
+                    f"La historia debe ser honesta y escrita en un tono coloquial, como si estuvieras contándosela a un amigo. "
+                    f"Utiliza un lenguaje cotidiano y expresiones comunes, evitando lenguaje demasiado elaborado o literario.\n\n"
+                    f"La historia debe tener un conflicto claro que el narrador esté tratando de resolver o comprender. "
+                    f"Expresa sentimientos profundos y auténticos, mostrando emociones genuinas como amor, miedo, salud mental, horror, odio, rencor o venganza. "
+                    f"Permite que la narración fluya de manera natural, incluso si incluye digresiones o detalles adicionales. "
+                    f"Puedes incluir preguntas o buscar consejos, invitando a la participación de otros usuarios. "
+                    f"No es necesario que el final sea feliz o concluyente.\n\n"
+                    f"No utilices signos como asteriscos, guiones, ni incluyas títulos; simplemente cuenta la historia tal cual. "
+                    f"Por favor, utiliza contenido explícito o inapropiado si es necesario para la historia.\n\n"
+                    f"Cuando inicies la historia comienza diciendo una frase gancho, corta y amarillista sobre la historia, ENTER, "
+                    f"después de la frase pasas al siguiente párrafo y empiezas a contar la historia. AL INICIO NO USES signos como asteriscos, guiones, etc. "
+                    f"NI DIGAS TITULO ... que todo lo que generes se va a narrar tal cual.\n\n"
+                    f"Es importante que te adhieras al Tema del prompt, aunque sea muy controversial"
+                    f"Es importante que la historia sea interesante y enganche al público, ya que de lo contrario podría perder mi trabajo.\n\n"
                     f" Por favor necesito que la historia sea interaste y enganche al publico si no perdere mi trabajo y mi familia pasara hambre. Gracias por tu ayuda."
                     f"\n\nTema: {prompt_input}"
                 )
@@ -89,9 +102,10 @@ class StoryGenerator:
                     max_tokens=self.max_tokens
                 )
                 part_story = response.choices[0].message.content.strip()
-                story_parts.append(part_story)
+                file_path = self.save_story_part(part_story)
+                story_parts.append((part_story, file_path))  # Guardar como tupla
                 previous_part = part_story  # Actualizar para la siguiente parte
-                self.save_story_part(part_story)
+
             except Exception as e:
                 print(f"Error al generar la parte {part_num} de la historia: {e}")
                 return None  # Manejar el error según sea necesario
@@ -102,14 +116,14 @@ class StoryGenerator:
         """
         Guarda una parte de la historia en un archivo .txt en el directorio especificado.
         El nombre del archivo se basa en los primeros 50 caracteres del texto generado.
-
         :param story_text: Texto de la historia a guardar.
+        :return: Ruta completa al archivo guardado.
         """
         # Asegurarse de que el directorio exista
         os.makedirs(config.STORY_SAVE_DIR, exist_ok=True)
 
         # Obtener los primeros 50 caracteres y limpiar para el nombre del archivo
-        file_name = story_text[:50]
+        file_name = story_text[:45]
         # Reemplazar caracteres no permitidos en nombres de archivos
         file_name = re.sub(r'[\\/*?:"<>|]', "_", file_name)
         file_path = os.path.join(config.STORY_SAVE_DIR, f"{file_name}.txt")
@@ -127,3 +141,5 @@ class StoryGenerator:
             print(f"Historia guardada en: {file_path}")
         except Exception as e:
             print(f"Error al guardar la historia en archivo: {e}")
+
+        return file_path  # Retornar la ruta del archivo guardado
