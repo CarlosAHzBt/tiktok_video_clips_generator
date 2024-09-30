@@ -11,7 +11,10 @@ TARGET_RESOLUTION = (576, 1024) # Resolución objetivo para los clips de video (
 VIDEO_SPEED_FACTOR = 1.9  # Factor de velocidad para procesamiento de video
 
 
+
+#EDGE TTS (Microsoft Voices)
 USE_EDGE_TTS = True  # Cambia a True para usar edge-tts en lugar de TTS con clonación de voz
+SPEED_VOICE_EDGE_TTS = 1.1  # Velocidad de la voz generada por edge-tts
 
 # Parámetros para TTS con clonación de voz
 SPEAKER_WAV_FEMALE = "camilahermana.mp3"
@@ -28,6 +31,9 @@ SPEAKER_WAV = 'camilahermana.mp3'  # Ruta al archivo de voz de referencia para l
 MUSIC_DIR = r'C:\\Users\\carlo\\Desktop\\MusicBackground'  # Ruta a la carpeta de música de fondo
 MUSIC_SUPPORTED_FORMATS = ['.mp3', '.wav', '.aac', '.flac', '.m4a']
 VOLUME_REDUCTION_DB = 30
+
+#MARCA DE AGUA
+WATERMARK_TEXT = "@Reddit.CC0" #Dejar en blanco si no se desea marca de agua
 
 # Archivo de Video Final
 VIDEO_FILE = 'video_with_audio.mp4'  
