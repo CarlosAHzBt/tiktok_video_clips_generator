@@ -5,6 +5,7 @@ os.environ["IMAGEMAGICK_BINARY"] = r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI
 
 import torch
 from moviepy.editor import VideoFileClip, AudioFileClip
+from modules.text_overlay import TextOverlay
 from modules.story_generator import StoryGenerator
 from modules.audio_duration_calculator import AudioDurationCalculator
 from modules.video_selector import VideoSelector
@@ -35,6 +36,9 @@ class RedditStoryVideoCreator:
         self.audio_file = config.AUDIO_FILE
         self.video_file = config.VIDEO_FILE
         self.final_output = config.FINAL_OUTPUT
+
+        # Marca de agua
+        self.marca_agua = config.WATERMARK_TEXT
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -76,45 +80,45 @@ class RedditStoryVideoCreator:
                 prompt_input = prompts[i]
                 num_parts = parts_per_video[i]
                 print(f"Generando historia para el video {i+1} con el prompt: {prompt_input} en {num_parts} partes.")
-
+        
                 if num_parts == 1:
                     # Generar una historia única
-                    story = self.story_generator.generate_story(prompt_input)
+                    story, story_file_path = self.story_generator.generate_story(prompt_input)
                     if not story:
                         print(f"No se pudo generar la historia para el video {i+1}. Terminando el proceso.")
                         continue
-
+                    
                     # Procesar la historia normalmente
-                    self.process_story(story, i+1)
+                    self.process_story(story, story_file_path, i+1)
                 else:
                     # Generar historia en múltiples partes
                     story_parts = self.story_generator.generate_story_in_parts(prompt_input, num_parts)
                     if not story_parts:
                         print(f"No se pudo generar la historia para el video {i+1}. Terminando el proceso.")
                         continue
-
-                    for part_num, story_part in enumerate(story_parts, start=1):
+                    
+                    for part_num, (story_part, story_file_path) in enumerate(story_parts, start=1):
                         # Procesar cada parte de la historia
-                        self.process_story(story_part, i+1, part_num)
+                        self.process_story(story_part, story_file_path, i+1, part_num)
 
         except Exception as e:
             print(f"Error durante el proceso de creación de los videos: {e}")
 
-    def process_story(self, story_text, video_number, part_number=None):
+    def process_story(self, story_text, story_file_path, video_number, part_number=None):
         """
         Procesa una historia o parte de ella y genera el video correspondiente.
         :param story_text: Texto de la historia o parte de la historia.
+        :param story_file_path: Ruta al archivo de texto donde se guardó la historia.
         :param video_number: Número del video principal.
         :param part_number: Número de la parte dentro de la historia larga (si aplica).
         """
-        # Modificar los nombres de los archivos si es una parte
-        if part_number:
-            audio_file = f"{self.audio_file}_video{video_number}_parte{part_number}.wav"
-            final_output = f"{self.final_output}_video{video_number}_parte{part_number}.mp4"
-        else:
-            audio_file = f"{self.audio_file}_video{video_number}.wav"
-            final_output = f"{self.final_output}_{video_number}.mp4"
-
+        # Obtener el nombre base del archivo de historia sin extensión
+        story_base_name = os.path.splitext(os.path.basename(story_file_path))[0]
+    
+        # Definir los nombres de los archivos de audio y video basados en el nombre de la historia
+        audio_file = f"{story_base_name}.wav"
+        final_output = f"{story_base_name}.mp4"
+    
         # Inicializar el generador de audio con el archivo de audio específico
         if USE_EDGE_TTS:
             audio_generator = AudioGenerator(
@@ -130,20 +134,20 @@ class RedditStoryVideoCreator:
                 audio_file=audio_file,
                 tts_model=config.TTS_MODEL
             )
-
+    
         # Paso 2: Convertir texto a voz (TTS)
         print(f"Convirtiendo el texto a voz para el video {video_number}, parte {part_number if part_number else ''}...")
         audio_generator.text_to_speech(story_text)
-
+    
         # Paso 3: Calcular la duración del audio
         print(f"Calculando la duración del audio para el video {video_number}, parte {part_number if part_number else ''}...")
         audio_duration_calculator = AudioDurationCalculator(audio_file=audio_file)
         audio_duration = audio_duration_calculator.get_audio_duration()
-
+    
         # Paso 4: Seleccionar clips de video que coincidan con la duración del audio
         print(f"Seleccionando clips de video para el video {video_number}, parte {part_number if part_number else ''}...")
         video_clip = self.video_selector.select_video_clips(audio_duration)
-
+    
         # Paso 5: Crear el video con el audio de narración y la música de fondo
         print(f"Creando el video {video_number}, parte {part_number if part_number else ''} con narración y música de fondo...")
         self.create_video_with_audio_and_music(video_clip, audio_file, final_output)
@@ -170,18 +174,30 @@ class RedditStoryVideoCreator:
         print(f"Duración del video: {video_clip.duration} segundos")
 
         # Permitir una diferencia de hasta 50 milisegundos
-        tolerance = 10  # en milisegundos
+        tolerance = 50  # en milisegundos
         if abs(audio_duration_ms - video_duration_ms) > tolerance:
             raise ValueError("La duración del audio combinado no coincide con la duración del video.")
         else:
             print("Duración del audio combinado coincide con la duración del video dentro de la tolerancia permitida.")
 
-        # Asignar el audio combinado al video
+        # Asignar el audio combinado al video y añadir la marca de agua
         try:
             mixed_audio_clip = AudioFileClip(mixed_audio_path)
-            final_video = video_clip.set_audio(mixed_audio_clip)
+            video_with_audio = video_clip.set_audio(mixed_audio_clip)
 
-            # Exportar el video con narración y música de fondo
+            # Añadir la marca de agua
+            text_overlay = TextOverlay(
+                text=self.marca_agua,
+                font='Arial-Bold',
+                fontsize=50,
+                color='white',
+                position=('center', 'bottom'),
+                duration=video_with_audio.duration
+            )
+
+            final_video = text_overlay.apply(video_with_audio)
+
+            # Exportar el video con narración, música de fondo y marca de agua
             print(f"Exportando el video final a: {final_output_path}")
             final_video.write_videofile(
                 final_output_path,
@@ -202,8 +218,7 @@ class RedditStoryVideoCreator:
             print(f"Error al combinar el video con la narración y la música: {e}")
             raise
 
-        print(f"Video con narración y música de fondo creado: {final_output_path}")
-
+        print(f"Video con narración, música de fondo y marca de agua creado: {final_output_path}")
 
 if __name__ == "__main__":
     creator = RedditStoryVideoCreator()
