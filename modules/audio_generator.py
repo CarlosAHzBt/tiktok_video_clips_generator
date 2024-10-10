@@ -14,22 +14,25 @@ class AudioGenerator(ABC):
         """
         words = text.split()
         fragments = []
-        current_fragment = ""
+        current_fragment_words = []
 
+        current_length = 0
         for word in words:
-            if len(current_fragment) + len(word) + 1 <= max_length:
-                if current_fragment:
-                    current_fragment += " "
-                current_fragment += word
+            word_length = len(word) + 1  # Añadir 1 por el espacio
+            if current_length + word_length <= max_length:
+                current_fragment_words.append(word)
+                current_length += word_length
             else:
-                fragments.append(current_fragment)
-                current_fragment = word
+                # Unir las palabras en el fragmento actual
+                fragments.append(' '.join(current_fragment_words))
+                # Iniciar un nuevo fragmento
+                current_fragment_words = [word]
+                current_length = word_length
 
-        if current_fragment:
-            fragments.append(current_fragment)
+        if current_fragment_words:
+            fragments.append(' '.join(current_fragment_words))
 
         return fragments
-
     @abstractmethod
     def text_to_speech(self, text):
         """

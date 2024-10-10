@@ -6,12 +6,9 @@ from pydub import AudioSegment
 import config
 
 class MusicAdder:
-    def __init__(self, music_dir=config.MUSIC_DIR, volume_reduction_db=30):
+    def __init__(self, music_dir=config.MUSIC_DIR, volume_reduction_db=config.VOLUME_REDUCTION_DB):
         """
         Inicializa MusicAdder con la carpeta de música y la reducción de volumen deseada.
-        
-        :param music_dir: Ruta a la carpeta que contiene archivos de música.
-        :param volume_reduction_db: Cantidad de decibelios para reducir el volumen de la música.
         """
         self.music_dir = music_dir
         self.volume_reduction_db = volume_reduction_db  # Reducción de volumen en decibelios
@@ -70,27 +67,28 @@ class MusicAdder:
     def add_music_to_audio(self, narration_audio_path, target_duration):
         """
         Combina la música de fondo con el audio de narración utilizando Pydub.
-        
-        :param narration_audio_path: Ruta al archivo de narración.
-        :param target_duration: Duración objetivo en segundos.
-        :return: Ruta al archivo de audio combinado.
+        Retorna el audio combinado como un objeto AudioSegment.
         """
         print("Combinando música de fondo con la narración usando Pydub...")
         try:
             # Cargar la narración
             narration = AudioSegment.from_file(narration_audio_path)
+            print(f"Narración cargada correctamente. Duración: {len(narration)/1000} segundos")
             
             # Ajustar la duración de la música
             adjusted_music = self.adjust_music_duration(target_duration)
             
             # Combinar la narración y la música
             combined = narration.overlay(adjusted_music)
+            print(f"Audio combinado creado. Duración: {len(combined)/1000} segundos")
             
-            # Exportar el audio combinado
-            combined_path = "mixed_audio_pydub.wav"
-            combined.export(combined_path, format="wav")
-            print(f"Música de fondo combinada con la narración correctamente. Archivo generado: {combined_path}")
-            return combined_path
+            # Asegurarse de que la duración es exactamente target_duration_ms
+            target_duration_ms = target_duration * 1000
+            combined = combined[:int(target_duration_ms)]
+            print(f"Duración del audio combinado después de ajustes: {len(combined)/1000} segundos")
+            
+            print("Música de fondo combinada con la narración correctamente.")
+            return combined  # Retornar el objeto AudioSegment
         except Exception as e:
             print(f"Error al combinar la música con la narración usando Pydub: {e}")
             raise
