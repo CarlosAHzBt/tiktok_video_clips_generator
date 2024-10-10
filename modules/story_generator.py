@@ -9,8 +9,8 @@ class StoryGenerator:
     def __init__(self, api_key=None, model_name=None, max_tokens=None):
         self.api_key = api_key or config.OPENAI_API_KEY
         OpenAI.api_key = self.api_key
-        self.model_name = model_name or config.OPENAI_MODEL_NAME
-        self.max_tokens = max_tokens or config.OPENAI_MAX_TOKENS
+        self.model_name =  config.OPENAI_MODEL_NAME
+        self.max_tokens =  config.OPENAI_MAX_TOKENS
         self.client = OpenAI()
 
     def generate_story(self, prompt_input):
@@ -52,12 +52,10 @@ class StoryGenerator:
             return None, None
 
     def generate_story_in_parts(self, prompt_input, num_parts):
-        """
-        Genera una historia dividida en partes.
-        """
         print(f"Generando una historia en {num_parts} partes...")
         story_parts = []
         previous_part = ""
+        initial_line = ""
 
         for part_num in range(1, num_parts + 1):
             print(f"Generando parte {part_num} de {num_parts}...")
@@ -74,23 +72,28 @@ class StoryGenerator:
                     f"No es necesario que el final sea feliz o concluyente.\n\n"
                     f"No utilices signos como asteriscos, guiones, ni incluyas títulos; simplemente cuenta la historia tal cual. "
                     f"Por favor, utiliza contenido explícito o inapropiado si es necesario para la historia.\n\n"
-                    f"Cuando inicies la historia comienza diciendo una frase gancho, corta y amarillista sobre la historia, ENTER, "
-                    f"después de la frase pasas al siguiente párrafo y empiezas a contar la historia. AL INICIO NO USES signos como asteriscos, guiones, etc. "
-                    f"NI DIGAS TITULO ... que todo lo que generes se va a narrar tal cual.\n\n"
-                    f"Es importante que te adhieras al Tema del prompt, aunque sea muy controversial"
+                    f"Cuando inicies la historia, comienza con el Tema como frase gancho y amarillista sobre la historia. Puedes utilizar el Tema como la frase gancho. Después de la frase, pasa al siguiente párrafo y empieza a contar la historia. "
+                    f"AL INICIO NO USES signos como asteriscos, guiones, etc., NI DIGAS TITULO o TEMA... que todo lo que generes se va a narrar tal cual.\n\n"
+                    f"Es importante que te adhieras al Tema del prompt, aunque sea muy controversial. "
                     f"Es importante que la historia sea interesante y enganche al público, ya que de lo contrario podría perder mi trabajo.\n\n"
-                    f" Por favor necesito que la historia sea interaste y enganche al publico si no perdere mi trabajo y mi familia pasara hambre. Gracias por tu ayuda."
+                    f"Por favor, necesito que la historia sea interesante y enganche al público; si no, perderé mi trabajo y mi familia pasará hambre. Gracias por tu ayuda."
                     f"\n\nTema: {prompt_input}"
+                    f"\n\nDeja un cliffhanger al final de esta parte para que la siguiente parte tenga un buen inicio."
                 )
             else:
+                # Extraer la línea inicial de la parte anterior
+                initial_line = previous_part.strip().split('\n')[0]
+
                 # Partes subsecuentes utilizando la parte anterior como contexto
                 prompt = (
+                    f"Esta es la siguiente parte de una historia estilo post de Reddit.\n\n"
                     f"Aquí está la parte anterior de la historia:\n\n{previous_part}\n\n"
-                    f"Continúa la historia en la parte {part_num}, manteniendo la coherencia y el estilo. "
-                    f"Cuando inicies comienza diciendo la misma frase gancho corta y amarillista que comienza la parte anterior de la historia, genera solo la historia en sí. AL INICIO NO USES signos como asteriscos, guiones, etc. NI DIGAS TITULO ... que todo lo que generes se va a narrar tal cual. "
-                    f"Comienza diciendo la frase gancho corta y amarillista seguido de decir Parte {part_num}"
-                    f"No hagas un resumen, simplemente continúa la narración."
-                    f" Si esta parte {part_num} es el mismo numero de parte que la parte final {num_parts} por favor termina la historia con un final impactante y sorprendente. "
+                    f"Es MUY IMPORTANTE que comiences esta parte repitiendo exactamente la misma línea inicial que la parte anterior, que es:\n\n\"{initial_line}\"\n\n"
+                    f"Después de repetir la línea inicial, Escribe Parte {part_num} (para dejar en claro que parte es) y de ahi continúa manteniendo la coherencia y el estilo.\n\n"
+                    f"No hagas un resumen, simplemente continúa la narración.\n\n"
+                    f"Es importante que te adhieras al Tema del prompt ({prompt_input}).\n\n"
+                    f"La longitud de esta parte debe ser máximo 1024 tokens.\n\n"
+                    f"MUY IMPORTANTE: Si esta parte (parte {part_num}) es la última (parte {num_parts}), por favor no extiendas más la historia y limítate a generar solo el final, cerrando la historia de manera impactante y sorprendente que guste a los lectores; no tiene que ser reflexivo. Si es necesario que el final sea vengativo y malvado si la historia va acorde a vengarse."
                 )
 
             try:
@@ -112,6 +115,7 @@ class StoryGenerator:
 
         return story_parts
 
+
     def save_story_part(self, story_text):
         """
         Guarda una parte de la historia en un archivo .txt en el directorio especificado.
@@ -123,7 +127,7 @@ class StoryGenerator:
         os.makedirs(config.STORY_SAVE_DIR, exist_ok=True)
 
         # Obtener los primeros 50 caracteres y limpiar para el nombre del archivo
-        file_name = story_text[:45]
+        file_name = story_text[:50]
         # Reemplazar caracteres no permitidos en nombres de archivos
         file_name = re.sub(r'[\\/*?:"<>|]', "_", file_name)
         file_path = os.path.join(config.STORY_SAVE_DIR, f"{file_name}.txt")
